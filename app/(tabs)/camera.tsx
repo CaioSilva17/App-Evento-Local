@@ -1,10 +1,67 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useState, useRef } from 'react';
+import {
+  View, Text, TouchableOpacity, Image, StyleSheet, ActivityIndicator, Alert, FlatList
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
 
 const CameraScreen = () => {
   const navigation = useNavigation();
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
+  const [facing, setFacing] = useState<'front' | 'back'>('back');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [capturedPhotos, setCapturedPhotos] = useState<string[]>([]);
+  const [showGallery, setShowGallery] = useState(false);
+  const cameraRef = useRef(null);
+
+  if (!cameraPermission || !mediaPermission) return <ActivityIndicator />;
+
+  if (!cameraPermission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text>Permissão da câmera não concedida</Text>
+        <TouchableOpacity onPress={requestCameraPermission}>
+          <Text>Permitir</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!mediaPermission.granted) {
+    return (
+      <View style={styles.container}>
+        <Text>Permissão de mídia não concedida</Text>
+        <TouchableOpacity onPress={requestMediaPermission}>
+          <Text>Permitir acesso à galeria</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const handleTakePicture = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePhotoAsync({ skipMetadata: true });
+      setPhotoUri(photo.uri);
+      setCapturedPhotos((prev) => [photo.uri, ...prev]);
+      setShowGallery(true);
+  
+      try {
+        const asset = await MediaLibrary.createAssetAsync(photo.uri);
+        console.log('Foto salva na galeria:', asset.uri);
+        Alert.alert('Sucesso', 'Foto salva na galeria!');
+      } catch (error) {
+        console.error('Erro ao salvar a foto:', error);
+        Alert.alert('Erro', 'Não foi possível salvar a foto.');
+      }
+    }
+  };
+
+  const toggleGallery = () => {
+    setShowGallery((prev) => !prev);
+  };
 
   return (
     <View style={styles.container}>
@@ -14,23 +71,42 @@ const CameraScreen = () => {
 
       <Text style={styles.title}>Câmera</Text>
 
-      <View style={styles.cameraPreview}>
-        <Image
-          source={require('../../assets/images/megafone.png')}
-          style={styles.cameraIcon}
-        />
-        <Text style={styles.previewText}>Integração com câmera em desenvolvimento</Text>
-      </View>
+      <CameraView
+        ref={cameraRef}
+        style={styles.cameraPreview}
+        facing={facing}
+        enableTorch={false}
+        photo
+      />
 
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.controlButton}>
+        <TouchableOpacity
+          style={styles.controlButton}
+          onPress={() => setFacing(facing === 'back' ? 'front' : 'back')}
+        >
           <Ionicons name="refresh" size={24} color="#888" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.captureButton} />
-        <TouchableOpacity style={styles.controlButton}>
-          <Ionicons name="image" size={24} color="#888" />
+
+        <TouchableOpacity style={styles.captureButton} onPress={handleTakePicture} />
+
+        <TouchableOpacity style={styles.controlButton} onPress={toggleGallery}>
+          <Ionicons name="images" size={24} color="#888" />
         </TouchableOpacity>
       </View>
+
+      {showGallery && (
+        <View style={styles.galleryContainer}>
+          <Text style={styles.galleryTitle}>Minhas Fotos</Text>
+          <FlatList
+            data={capturedPhotos}
+            keyExtractor={(item, index) => `${item}-${index}`}
+            horizontal
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.galleryImage} />
+            )}
+          />
+        </View>
+      )}
 
       <Text style={styles.footerText}>Capture fotos dos eventos</Text>
     </View>
@@ -38,32 +114,14 @@ const CameraScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-  },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  backButton: { marginBottom: 10 },
+  title: { fontSize: 28, fontWeight: 'bold' },
   cameraPreview: {
     flex: 1,
     backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  cameraIcon: {
-    width: 50,
-    height: 50,
-    marginBottom: 16,
-  },
-  previewText: {
-    color: '#fff',
-    fontSize: 16,
   },
   controls: {
     flexDirection: 'row',
@@ -72,9 +130,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   controlButton: {
-    width: 60, // Ajuste o tamanho conforme necessário
-    height: 60, // Ajuste o tamanho conforme necessário
-    borderRadius: 30, // Metade da largura/altura para torná-lo circular
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 1,
     borderColor: '#ccc',
     alignItems: 'center',
@@ -85,6 +143,23 @@ const styles = StyleSheet.create({
     height: 70,
     borderRadius: 35,
     backgroundColor: '#333',
+    borderWidth: 4,
+    borderColor: '#fff',
+  },
+  galleryContainer: {
+    paddingVertical: 10,
+  },
+  galleryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  galleryImage: {
+    width: 80,
+    height: 80,
+    marginHorizontal: 5,
+    borderRadius: 8,
   },
   footerText: {
     textAlign: 'center',

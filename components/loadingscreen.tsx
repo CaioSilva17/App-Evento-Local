@@ -1,4 +1,3 @@
-// components/LoadingScreen.tsx
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Animated } from 'react-native';
 
@@ -9,7 +8,7 @@ const LoadingScreen = () => {
     Animated.loop(
       Animated.timing(progress, {
         toValue: 1,
-        duration: 1500, // Duração da animação (ajuste conforme necessário)
+        duration: 1500,
         useNativeDriver: false,
       })
     ).start();
@@ -23,7 +22,7 @@ const LoadingScreen = () => {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../assets/images/megafone.png')} // Substitua pelo caminho da sua logo
+        source={require('../assets/images/megafone.png')}
         style={styles.logo}
       />
       <Text style={styles.title}>EventoLocal</Text>
@@ -67,7 +66,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: 'gray', // Cor da barra de progresso
+    backgroundColor: 'gray',
   },
   loadingText: {
     fontSize: 14,

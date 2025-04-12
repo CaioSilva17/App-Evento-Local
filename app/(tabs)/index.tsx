@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, TextInput } from "react-native";
 import { useState } from "react";
 import { MaterialIcons } from "@expo/vector-icons";
 
@@ -24,20 +24,22 @@ const EventCard = ({ event }) => (
       {event.icon && <MaterialIcons name={event.icon} size={18} color="gray" />}
     </View>
     <Text style={styles.eventTime}>{event.time} - {event.location}</Text>
-    <TouchableOpacity style={styles.button} onPress={() => alert("Detalhes do evento")}> 
+    <TouchableOpacity style={styles.button} onPress={() => alert("Detalhes do evento")}>
       <Text style={styles.buttonText}>Ver Detalhes</Text>
     </TouchableOpacity>
   </View>
 );
 
-const FeaturedEventCard = () => (
+const FeaturedEventCard = ({ customDescription }) => (
   <View style={styles.card}>
     <Text style={styles.featuredTitle}>{featuredEvent.title}</Text>
     <Text style={styles.featuredSubtitle}>{featuredEvent.subtitle}</Text>
     <View style={styles.featuredImagePlaceholder}>
       <MaterialIcons name="confirmation-number" size={40} color="gray" />
     </View>
-    <Text style={styles.featuredDescription}>{featuredEvent.description}</Text>
+    <Text style={styles.featuredDescription}>
+      {customDescription || featuredEvent.description}
+    </Text>
     <View style={styles.featuredButtons}>
       <TouchableOpacity style={styles.mapButton}>
         <MaterialIcons name="place" size={18} color="black" />
@@ -52,6 +54,8 @@ const FeaturedEventCard = () => (
 
 export default function HomeScreen() {
   const [selectedTab, setSelectedTab] = useState("Destaques");
+  const [descricao, setDescricao] = useState("");
+
   return (
     <View style={styles.container}>
       <View style={styles.logoContainer}>
@@ -71,11 +75,29 @@ export default function HomeScreen() {
         ))}
       </View>
 
+      {/* Formulário de descrição */}
+      <View style={styles.formContainer}>
+        <Text style={styles.formLabel}>Adicione uma descrição personalizada:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite aqui..."
+          value={descricao}
+          onChangeText={setDescricao}
+          multiline
+        />
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={() => alert("Descrição adicionada: " + descricao)}
+        >
+          <Text style={styles.submitButtonText}>Salvar Descrição</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={[{ id: "featured", isFeatured: true }, ...events]}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) =>
-          item.isFeatured ? <FeaturedEventCard /> : <EventCard event={item} />
+          item.isFeatured ? <FeaturedEventCard customDescription={descricao} /> : <EventCard event={item} />
         }
       />
     </View>
@@ -92,11 +114,11 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: "#E8F0FE" },
   tabText: { fontSize: 16, color: "gray" },
   tabTextActive: { color: "black", fontWeight: "bold" },
-  card: { 
-    backgroundColor: "#F8F9FA", 
-    padding: 20, 
-    borderRadius: 10, 
-    marginBottom: 15, 
+  card: {
+    backgroundColor: "#F8F9FA",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 15,
     marginHorizontal: 10,
   },
   eventTitle: { fontSize: 18, fontWeight: "bold" },
@@ -113,11 +135,57 @@ const styles = StyleSheet.create({
   buttonText: { color: "white", fontSize: 14 },
   featuredTitle: { fontSize: 20, fontWeight: "bold" },
   featuredSubtitle: { fontSize: 14, color: "gray", marginBottom: 10 },
-  featuredImagePlaceholder: { backgroundColor: "#F0F0F0", height: 100, justifyContent: "center", alignItems: "center", borderRadius: 10, marginBottom: 10 },
+  featuredImagePlaceholder: {
+    backgroundColor: "#F0F0F0",
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+    marginBottom: 10,
+  },
   featuredDescription: { fontSize: 14, color: "gray", marginBottom: 10 },
   featuredButtons: { flexDirection: "row", justifyContent: "space-between" },
-  mapButton: { flexDirection: "row", alignItems: "center", backgroundColor: "#EAECEF", padding: 10, borderRadius: 5 },
+  mapButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EAECEF",
+    padding: 10,
+    borderRadius: 5,
+  },
   mapButtonText: { marginLeft: 5 },
   participateButton: { backgroundColor: "#000", padding: 10, borderRadius: 5 },
   participateButtonText: { color: "white" },
+
+  // estilos do formulário
+  formContainer: {
+    backgroundColor: "#F2F2F2",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  input: {
+    backgroundColor: "#fff",
+    padding: 10,
+    borderRadius: 5,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    minHeight: 60,
+    textAlignVertical: "top",
+    marginBottom: 10,
+  },
+  submitButton: {
+    backgroundColor: "#000",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "#fff",
+    fontSize: 16,
+  },
 });
