@@ -32,9 +32,19 @@ export default function TabLayout() {
           borderTopWidth: 0,
         },
       }}
-    >
-      <Tabs.Screen
+    > <Tabs.Screen
         name="index"
+        options={{
+          title: "Perfil do Usuário",
+          tabBarIcon: ({ color, focused }) => (
+            <View style={[styles.iconContainer, focused && styles.activeIcon]}>
+              <MaterialIcons name="person" size={26} color={focused ? "#fff" : color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="perfil"
         options={{
           title: "Evento Local",
           tabBarIcon: ({ color, focused }) => (
@@ -62,17 +72,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={[styles.iconContainer, focused && styles.activeIcon]}>
               <MaterialIcons name="photo-camera" size={26} color={focused ? "#fff" : color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="perfil"
-        options={{
-          title: "Perfil do Usuário",
-          tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconContainer, focused && styles.activeIcon]}>
-              <MaterialIcons name="person" size={26} color={focused ? "#fff" : color} />
             </View>
           ),
         }}

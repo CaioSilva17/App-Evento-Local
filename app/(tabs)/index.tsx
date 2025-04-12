@@ -1,191 +1,194 @@
-import { View, Text, TouchableOpacity, FlatList, Image, StyleSheet, TextInput } from "react-native";
-import { useState } from "react";
-import { MaterialIcons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import * as LocalAuthentication from 'expo-local-authentication';
 
-const events = [
-  { id: 1, title: "Festival de Música", date: "Hoje", time: "20:00", location: "Parque Central", icon: "music-note" },
-  { id: 2, title: "Feira Gastronômica", date: "Amanhã", time: "10:00", location: "Praça das Artes", icon: "local-dining" },
-  { id: 3, title: "Exposição de Arte", date: "Sexta", time: "14:00", location: "Museu Municipal", icon: "person-outline" },
-];
+export default function Perfil() {
+  const navigation = useNavigation();
+  const [isLogin, setIsLogin] = useState(true);
 
-const featuredEvent = {
-  title: "Evento em Destaque",
-  subtitle: "Festival de Cultura Local - Este final de semana",
-  description: "Venha participar do maior evento cultural da cidade, com apresentações de música, dança, gastronomia e muito mais!",
-};
+  const handleBiometricLogin = async () => {
+    try {
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Autentique-se com biometria',
+      });
 
-const TABS = ["Destaques", "Categorias", "Próximos"];
-
-const EventCard = ({ event }) => (
-  <View style={styles.card}>
-    <Text style={styles.eventTitle}>{event.title}</Text>
-    <View style={styles.eventDetails}>
-      <Text style={styles.eventDate}>{event.date}</Text>
-      {event.icon && <MaterialIcons name={event.icon} size={18} color="gray" />}
-    </View>
-    <Text style={styles.eventTime}>{event.time} - {event.location}</Text>
-    <TouchableOpacity style={styles.button} onPress={() => alert("Detalhes do evento")}>
-      <Text style={styles.buttonText}>Ver Detalhes</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-const FeaturedEventCard = ({ customDescription }) => (
-  <View style={styles.card}>
-    <Text style={styles.featuredTitle}>{featuredEvent.title}</Text>
-    <Text style={styles.featuredSubtitle}>{featuredEvent.subtitle}</Text>
-    <View style={styles.featuredImagePlaceholder}>
-      <MaterialIcons name="confirmation-number" size={40} color="gray" />
-    </View>
-    <Text style={styles.featuredDescription}>
-      {customDescription || featuredEvent.description}
-    </Text>
-    <View style={styles.featuredButtons}>
-      <TouchableOpacity style={styles.mapButton}>
-        <MaterialIcons name="place" size={18} color="black" />
-        <Text style={styles.mapButtonText}>Ver no mapa</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.participateButton}>
-        <Text style={styles.participateButtonText}>Participar</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-);
-
-export default function HomeScreen() {
-  const [selectedTab, setSelectedTab] = useState("Destaques");
-  const [descricao, setDescricao] = useState("");
+      if (result.success) {
+        Alert.alert('Sucesso', 'Autenticação biométrica bem-sucedida.');
+      } else {
+        Alert.alert('Falha', 'Autenticação biométrica falhou.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', 'Falha ao autenticar com biometria.');
+      console.error('Erro de biometria:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <Image source={require("../../assets/images/megafone.png")} style={styles.logo} />
-      </View>
-      <Text style={styles.subtitle}>Descubra os melhores eventos próximos a você</Text>
+      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
+
+      <Text style={styles.title}>Login</Text>
 
       <View style={styles.tabContainer}>
-        {TABS.map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tabButton, selectedTab === tab && styles.tabActive]}
-            onPress={() => setSelectedTab(tab)}
-          >
-            <Text style={[styles.tabText, selectedTab === tab && styles.tabTextActive]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Formulário de descrição */}
-      <View style={styles.formContainer}>
-        <Text style={styles.formLabel}>Adicione uma descrição personalizada:</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Digite aqui..."
-          value={descricao}
-          onChangeText={setDescricao}
-          multiline
-        />
         <TouchableOpacity
-          style={styles.submitButton}
-          onPress={() => alert("Descrição adicionada: " + descricao)}
+          style={[styles.tabButton, isLogin && styles.activeTab]}
+          onPress={() => setIsLogin(true)}
         >
-          <Text style={styles.submitButtonText}>Salvar Descrição</Text>
+          <Text style={[styles.tabText, isLogin && styles.activeTabText]}>Login</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, !isLogin && styles.activeTab]}
+          onPress={() => setIsLogin(false)}
+        >
+          <Text style={[styles.tabText, !isLogin && styles.activeTabText]}>Cadastro</Text>
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={[{ id: "featured", isFeatured: true }, ...events]}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) =>
-          item.isFeatured ? <FeaturedEventCard customDescription={descricao} /> : <EventCard event={item} />
-        }
-      />
+      <View style={styles.formContainer}>
+        {isLogin ? (
+          <>
+            <Text style={styles.sectionTitle}>Faça login</Text>
+            <Text style={styles.subtitle}>Entre com sua conta para acesso completo.</Text>
+
+            <Text style={styles.label}>Email</Text>
+            <TextInput style={styles.input} placeholder="seu.email@exemplo.com" keyboardType="email-address" />
+
+            <Text style={styles.label}>Senha</Text>
+            <TextInput style={styles.input} secureTextEntry />
+
+            <TouchableOpacity style={styles.button}>
+              <Ionicons name="mail" size={20} color="white" />
+              <Text style={styles.buttonText}>Entrar com Email</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.biometricButton} onPress={handleBiometricLogin}>
+              <Ionicons name="finger-print" size={20} color="black" />
+              <Text style={styles.biometricText}>Entrar com Biometria</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionTitle}>Criar uma conta</Text>
+            <Text style={styles.subtitle}>Registre-se para explorar todos os eventos.</Text>
+
+            <Text style={styles.label}>Nome Completo</Text>
+            <TextInput style={styles.input} placeholder="Seu nome completo" />
+
+            <Text style={styles.label}>Email</Text>
+            <TextInput style={styles.input} placeholder="seu.email@exemplo.com" keyboardType="email-address" />
+
+            <Text style={styles.label}>Senha</Text>
+            <TextInput style={styles.input} secureTextEntry />
+
+            <Text style={styles.label}>Confirme a Senha</Text>
+            <TextInput style={styles.input} secureTextEntry />
+
+            <TouchableOpacity style={styles.button}>
+              <Ionicons name="person-add" size={20} color="white" />
+              <Text style={styles.buttonText}>Cadastrar</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 20 },
-  logoContainer: { alignItems: "center", marginBottom: 10 },
-  logo: { width: 120, height: 50, resizeMode: "contain" },
-  subtitle: { fontSize: 16, color: "gray", textAlign: "center", marginBottom: 15 },
-  tabContainer: { flexDirection: "row", justifyContent: "space-around", marginBottom: 15 },
-  tabButton: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10 },
-  tabActive: { backgroundColor: "#E8F0FE" },
-  tabText: { fontSize: 16, color: "gray" },
-  tabTextActive: { color: "black", fontWeight: "bold" },
-  card: {
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  backButton: {
+    marginBottom: 10,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+  },
+  tabContainer: {
+    flexDirection: "row",
+    marginTop: 20,
+    backgroundColor: "#EAECEF",
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  tabButton: {
+    flex: 1,
+    padding: 10,
+    alignItems: "center",
+  },
+  activeTab: {
+    backgroundColor: "#fff",
+    borderBottomWidth: 2,
+    borderBottomColor: "#000",
+  },
+  tabText: {
+    fontSize: 16,
+    color: "#888",
+  },
+  activeTabText: {
+    fontWeight: "bold",
+    color: "#000",
+  },
+  formContainer: {
     backgroundColor: "#F8F9FA",
     padding: 20,
     borderRadius: 10,
-    marginBottom: 15,
-    marginHorizontal: 10,
+    marginTop: 20,
   },
-  eventTitle: { fontSize: 18, fontWeight: "bold" },
-  eventDetails: { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 5 },
-  eventDate: { fontSize: 16, fontWeight: "bold" },
-  eventTime: { fontSize: 14, color: "gray" },
-  button: {
-    backgroundColor: "#000",
-    padding: 8,
-    borderRadius: 5,
-    alignSelf: "flex-end",
-    marginTop: 5,
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
   },
-  buttonText: { color: "white", fontSize: 14 },
-  featuredTitle: { fontSize: 20, fontWeight: "bold" },
-  featuredSubtitle: { fontSize: 14, color: "gray", marginBottom: 10 },
-  featuredImagePlaceholder: {
-    backgroundColor: "#F0F0F0",
-    height: 100,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 10,
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
     marginBottom: 10,
   },
-  featuredDescription: { fontSize: 14, color: "gray", marginBottom: 10 },
-  featuredButtons: { flexDirection: "row", justifyContent: "space-between" },
-  mapButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#EAECEF",
-    padding: 10,
-    borderRadius: 5,
-  },
-  mapButtonText: { marginLeft: 5 },
-  participateButton: { backgroundColor: "#000", padding: 10, borderRadius: 5 },
-  participateButtonText: { color: "white" },
-
-  // estilos do formulário
-  formContainer: {
-    backgroundColor: "#F2F2F2",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
-  },
-  formLabel: {
-    fontSize: 16,
+  label: {
+    fontSize: 14,
+    marginTop: 10,
     fontWeight: "bold",
-    marginBottom: 5,
   },
   input: {
     backgroundColor: "#fff",
-    padding: 10,
     borderRadius: 5,
-    borderColor: "#ccc",
+    padding: 10,
     borderWidth: 1,
-    minHeight: 60,
-    textAlignVertical: "top",
+    borderColor: "#ddd",
     marginBottom: 10,
   },
-  submitButton: {
+  button: {
+    flexDirection: "row",
     backgroundColor: "#000",
-    padding: 10,
+    padding: 12,
     borderRadius: 5,
     alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
   },
-  submitButtonText: {
-    color: "#fff",
+  buttonText: {
+    color: "white",
     fontSize: 16,
+    marginLeft: 8,
+  },
+  biometricButton: {
+    flexDirection: "row",
+    backgroundColor: "#EAECEF",
+    padding: 12,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  biometricText: {
+    fontSize: 16,
+    marginLeft: 8,
   },
 });
