@@ -1,5 +1,7 @@
 # Welcome to your Expo app 👋
 
+Desenvolvedores: Carlos Felipe[202222362], Lucas Matheus[202222052], Caio Cunha[202210083] e Marcos Fabiano[202222080]
+
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
 ## Get started
